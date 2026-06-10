@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>اللعبة — أوريكس فلو</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="assets/oryx-logo.png"/>
+  <script src="i18n.js"></script>
+  <style>
+    .game-cover {
+      width: 100%;
+      height: clamp(220px, 38vw, 400px);
+      background: var(--card2);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .game-cover img { width:100%; height:100%; object-fit:cover; display:block; }
+    .game-cover-ph {
+      width:100%; height:100%;
+      display:flex; align-items:center; justify-content:center;
+      font-family:var(--font-head); font-size:4rem;
+      color:rgba(234,255,0,0.07); letter-spacing:8px;
+    }
+    .btn-dl {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: var(--black);
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 1.05rem;
+      padding: 15px 40px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 0 24px rgba(234,255,0,0.2);
+      letter-spacing: 0.5px;
+    }
+    .btn-dl:hover:not(:disabled) {
+      background: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px rgba(234,255,0,0.4);
+    }
+    .btn-dl:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .dl-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.88rem;
+      color: var(--grey);
+      margin-top: 10px;
+    }
+    .game-meta-tag {
+      padding: 4px 12px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.78rem;
+      color: var(--grey);
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <img src="assets/oryx-logo.png" class="loading-logo" alt="Oryx"/>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+<div id="toast-container"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="index.html" class="nav-logo">
+      <img src="assets/oryx-logo.png" alt="Oryx Flow"/>
+      <span>ORYX <em>FLOW</em></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" data-i18n="nav_home">الرئيسية</a></li>
+      <li><a href="profile.html" class="nav-logged-in hidden" data-i18n="nav_profile">حسابي</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="lang-btn" id="lang-toggle-btn" onclick="i18n.toggle()">EN</button>
+      <div class="nav-coins nav-logged-in hidden">
+        <img src="assets/oryx-coins.webp" alt="coins"/>
+        <span class="js-coins">0</span>
+      </div>
+      <a href="login.html" class="btn btn-outline btn-sm nav-logged-out">دخول</a>
+      <button onclick="logout()" class="btn btn-ghost btn-sm nav-logged-in hidden">خروج</button>
+    </div>
+  </div>
+</nav>
+
+<!-- GAME PAGE -->
+<div style="padding:100px 0 80px">
+  <div class="container" style="max-width:860px">
+
+    <!-- Loading -->
+    <div id="game-loading" style="text-align:center;padding:80px 0;color:var(--grey)">
+      <div style="font-size:2rem;margin-bottom:12px">⏳</div>
+      <p>جاري التحميل...</p>
+    </div>
+
+    <!-- Not found -->
+    <div id="game-notfound" style="display:none;text-align:center;padding:80px 20px">
+      <div style="font-size:3rem;margin-bottom:16px">🎮</div>
+      <h2 style="margin-bottom:8px">اللعبة غير موجودة</h2>
+      <p style="color:var(--grey);margin-bottom:24px">ربما تم حذفها أو الرابط خاطئ</p>
+      <a href="index.html" class="btn btn-primary">← الرئيسية</a>
+    </div>
+
+    <!-- Content -->
+    <div id="game-content" style="display:none">
+
+      <!-- Cover Image -->
+      <div class="game-cover" id="game-cover">
+        <div class="game-cover-ph" id="game-cover-ph">...</div>
+      </div>
+
+      <!-- Title + Meta -->
+      <div style="margin-bottom:20px">
+        <h1 id="game-title" style="font-size:clamp(1.5rem,4vw,2.2rem);margin-bottom:10px">...</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px" id="game-meta-row">
+        </div>
+        <!-- Developer -->
+        <div style="display:flex;align-items:center;gap:10px;font-size:0.88rem;color:var(--grey)">
+          <span>بواسطة</span>
+          <strong id="game-dev-name" style="color:var(--white)">...</strong>
+        </div>
+      </div>
+
+      <!-- DOWNLOAD -->
+      <div style="text-align:center;padding:32px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:24px">
+        <button class="btn-dl" id="dl-btn" onclick="doDownload()">
+          ⬇️ تنزيل اللعبة
+        </button>
+        <div class="dl-count">
+          📥 <span id="dl-count">0</span> تنزيل
+        </div>
+        <div id="dl-success" style="display:none;margin-top:14px;padding:12px 18px;background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.25);border-radius:8px;font-size:0.88rem;color:var(--apex)">
+          ✅ رائع! اللعبة بدأت بالتنزيل — فك الضغط واستمتع 🎮
+        </div>
+        <div class="nav-logged-out" style="margin-top:14px;font-size:0.85rem;color:var(--grey)">
+          💡 <a href="login.html" style="color:var(--accent)">سجل دخولك</a> واكسب كوينز عند التنزيل
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="card" style="margin-bottom:20px">
+        <h3 style="font-size:1rem;margin-bottom:10px">📖 عن اللعبة</h3>
+        <p id="game-desc" style="color:var(--grey);line-height:1.85;font-size:0.95rem"></p>
+      </div>
+
+      <!-- Video -->
+      <div id="game-video-wrap" style="display:none;margin-bottom:20px">
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--accent);font-weight:600">
+            🎬 فيديو اللعب
+          </div>
+          <div id="game-video-container"></div>
+        </div>
+      </div>
+
+      <!-- Trophies -->
+      <div id="game-trophy-wrap" style="display:none;margin-bottom:20px">
+        <div class="card">
+          <h3 style="font-size:1rem;margin-bottom:14px">🏆 الكؤوس المتاحة</h3>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center" id="game-trophies"></div>
+          <p style="font-size:0.78rem;color:var(--grey2);text-align:center;margin-top:12px">
+            العب محلياً ثم عد هنا لتفتح كأسك 🏆
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import './app.js';
+</script>
+
+<script>
+  const gameId = new URLSearchParams(window.location.search).get('id');
+  let _game = null;
+  if (!gameId) window.location.href = 'index.html';
+
+  // Wait for Firebase
+  const _p = setInterval(async () => {
+    if (window.OryxApp && window.OryxApp.currentUser !== undefined) {
+      clearInterval(_p);
+      await _initPage();
+    }
+  }, 200);
+
+  async function _initPage() {
+    try { _game = await window.loadGame(gameId); } catch (_) {}
+    document.getElementById('game-loading').style.display = 'none';
+    if (!_game) { document.getElementById('game-notfound').style.display = 'block'; return; }
+    document.title = _game.title + ' — Oryx Flow';
+    _render(_game);
+  }
+
+  function _render(g) {
+    document.getElementById('game-content').style.display = 'block';
+
+    // Cover
+    const cover = document.getElementById('game-cover');
+    const ph    = document.getElementById('game-cover-ph');
+    if (g.thumbnailURL) {
+      const img = document.createElement('img');
+      img.src = g.thumbnailURL; img.alt = g.title;
+      img.onload  = () => { if(ph) ph.style.display='none'; };
+      img.onerror = () => { if(ph) ph.textContent=(g.title||'').substring(0,6).toUpperCase(); };
+      cover.insertBefore(img, ph);
+    } else {
+      ph.textContent = (g.title||'').substring(0,6).toUpperCase();
+    }
+
+    // Title
+    document.getElementById('game-title').textContent = g.title;
+
+    // Meta row
+    const mr = document.getElementById('game-meta-row');
+    if (g.genre)    mr.insertAdjacentHTML('beforeend', `<span class="game-meta-tag">${g.genre}</span>`);
+    if (g.platform === 'mobile') mr.insertAdjacentHTML('beforeend', `<span class="game-meta-tag">📱 جوال</span>`);
+    if (g.platform === 'both')   mr.insertAdjacentHTML('beforeend', `<span class="game-meta-tag">🌐 جوال + بيسي</span>`);
+    if (g.platform === 'pc')     mr.insertAdjacentHTML('beforeend', `<span class="game-meta-tag">🖥️ بيسي</span>`);
+
+    // Developer
+    document.getElementById('game-dev-name').textContent =
+      g.developerDisplay || g.developerName || 'مجهول';
+
+    // Download count
+    document.getElementById('dl-count').textContent = g.downloads || 0;
+
+    // Download button state
+    const dlBtn = document.getElementById('dl-btn');
+    if (!g.gameFileURL) {
+      dlBtn.disabled = true;
+      dlBtn.textContent = 'الملف غير متاح';
+    }
+
+    // Description
+    document.getElementById('game-desc').textContent = g.description || '';
+
+    // Video
+    if (g.videoURL) {
+      const vw = document.getElementById('game-video-wrap');
+      const vc = document.getElementById('game-video-container');
+      vw.style.display = 'block';
+      const ytM = g.videoURL.match(/(?:v=|youtu\.be\/|embed\/)([\w-]+)/);
+      if (ytM) {
+        vc.innerHTML = `<div style="position:relative;padding-top:56.25%">
+          <iframe src="https://www.youtube.com/embed/${ytM[1]}"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;border:none"
+            allowfullscreen allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture">
+          </iframe></div>`;
+      } else {
+        vc.innerHTML = `<video controls style="width:100%;max-height:300px;background:#000">
+          <source src="${g.videoURL}" type="video/mp4"/></video>`;
+      }
+    }
+
+    // Trophies
+    if (g.trophiesAvailable) {
+      const avail = ['bronze','silver','gold','apex'].filter(tp => g.trophiesAvailable[tp]);
+      if (avail.length) {
+        const tw = document.getElementById('game-trophy-wrap');
+        const tc = document.getElementById('game-trophies');
+        tw.style.display = 'block';
+        const names  = {bronze:'برونز',silver:'سيلفر',gold:'جولد',apex:'⚜️ Apex'};
+        const coins  = {bronze:20,silver:40,gold:70,apex:150};
+        tc.innerHTML = avail.map(tp => `
+          <div class="trophy-item locked" data-trophy="${tp}"
+            onclick="_tryTrophy('${tp}')" style="cursor:pointer">
+            <img src="assets/trophy-${tp}.webp" class="trophy-img" alt="${tp}"/>
+            <div class="trophy-name">${names[tp]}</div>
+            <div class="trophy-coins">+${coins[tp]}</div>
+          </div>`).join('');
+        if (window.OryxApp.userData) updateTrophyUI();
+      }
+    }
+  }
+
+  // DOWNLOAD — direct from GitHub raw URL
+  async function doDownload() {
+    const { currentUser } = window.OryxApp;
+    if (!currentUser) {
+      showToast('سجل دخولك لتنزيل اللعبة! 🎮', 'error');
+      setTimeout(() => window.location.href = 'login.html', 900);
+      return;
+    }
+    if (!_game?.gameFileURL) { showToast('الملف غير متاح', 'error'); return; }
+
+    const btn = document.getElementById('dl-btn');
+    btn.disabled = true; btn.textContent = '⏳ جاري...';
+
+    try {
+      await window.trackDownload(gameId);
+      window.open(_game.gameFileURL, '_blank');
+
+      // Update download count in UI
+      const cnt = parseInt(document.getElementById('dl-count').textContent || '0');
+      document.getElementById('dl-count').textContent = cnt + 1;
+      _game.downloads = (cnt + 1);
+
+      document.getElementById('dl-success').style.display = 'block';
+      showToast('🎮 استمتع باللعبة!', 'success');
+    } catch (err) {
+      showToast('حدث خطأ أثناء التنزيل، حاول مرة أخرى', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = '⬇️ تنزيل اللعبة';
+    }
+  }
+
+  function _tryTrophy(type) {
+    if (!window.OryxApp.currentUser) {
+      showToast('سجل دخولك لفتح الكؤوس!', 'error');
+      setTimeout(() => window.location.href = 'login.html', 800);
+      return;
+    }
+    window.unlockTrophy(type);
+  }
+
+  function toggleNav() {
+    const l = document.querySelector('.nav-links'), h = document.getElementById('nav-hamburger');
+    if (!l) return;
+    const o = l.classList.toggle('nav-open'); if(h) h.classList.toggle('open', o);
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.navbar')) {
+      document.querySelector('.nav-links')?.classList.remove('nav-open');
+      document.getElementById('nav-hamburger')?.classList.remove('open');
+    }
+  });
+</script>
+</body>
+</html>

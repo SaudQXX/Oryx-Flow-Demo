@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>دخول — أوريكس فلو</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="assets/oryx-logo.png"/>
+  <script src="i18n.js"></script>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <img src="assets/oryx-logo.png" class="loading-logo" alt="Oryx"/>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+<div id="toast-container"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <img src="assets/oryx-logo.png" alt="Oryx Flow"/>
+      <span>ORYX <em>FLOW</em></span>
+    </a>
+    <div class="nav-right">
+      <button class="lang-btn" id="lang-toggle-btn" onclick="i18n.toggle()">EN</button>
+      <a href="index.html" class="btn btn-ghost btn-sm">← الرئيسية</a>
+    </div>
+  </div>
+</nav>
+
+<!-- AUTH PAGE -->
+<div class="auth-page">
+  <div class="auth-bg"></div>
+
+  <div class="auth-card fade-in" style="max-width:460px">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <img src="assets/oryx-logo.png" alt="Oryx Flow"/>
+      <h1>ORYX <span class="accent">FLOW</span></h1>
+      <p style="color:var(--grey);font-size:0.9rem;margin-top:6px">منصة الجيمنق الاجتماعي</p>
+    </div>
+
+    <!-- شرح النظام -->
+    <div style="
+      background: rgba(234,255,0,0.04);
+      border: 1px solid rgba(234,255,0,0.15);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      font-size: 0.88rem;
+      color: var(--grey);
+      line-height: 1.8;
+    ">
+      <div style="color:var(--accent);font-weight:700;margin-bottom:6px;font-family:var(--font-head)">
+        🔐 نظام OXID
+      </div>
+      ادخل الـ OXID الخاص فيك من منصة <strong style="color:var(--white)">Oryx Horizon</strong>
+      للوصول لحسابك. لا حاجة لإيميل أو كلمة سر.
+    </div>
+
+    <!-- رسالة الخطأ -->
+    <div class="auth-error" id="auth-error"></div>
+
+    <!-- حقل OXID -->
+    <div class="form-group" style="margin-bottom:20px">
+      <label style="font-size:0.88rem;color:var(--grey);margin-bottom:8px;display:block">
+        OXID <span style="color:var(--red)">*</span>
+      </label>
+      <input
+        type="text"
+        id="oxid-input"
+        placeholder="أدخل OXID هنا..."
+        autocomplete="off"
+        spellcheck="false"
+        style="
+          direction: ltr;
+          text-align: left;
+          font-family: var(--font-mono);
+          font-size: 1rem;
+          letter-spacing: 1px;
+          width: 100%;
+        "
+      />
+      <small style="color:var(--grey2);font-size:0.76rem;margin-top:6px;display:block">
+        يمكنك الحصول على OXID من منصة Oryx Horizon
+      </small>
+    </div>
+
+    <!-- زر الدخول -->
+    <button
+      class="btn btn-primary w-full"
+      id="btn-oxid-login"
+      onclick="handleOxidLogin()"
+      style="font-size:1rem;padding:14px"
+    >
+      ادخل بـ OXID →
+    </button>
+
+    <!-- رابط Horizon -->
+    <div style="text-align:center;margin-top:20px;font-size:0.83rem;color:var(--grey)">
+      ما عندك OXID؟
+      <a
+        href="https://oryx-horizon.vercel.app"
+        target="_blank"
+        rel="noopener"
+        style="color:var(--accent);margin-right:4px"
+      >
+        سجّل في Oryx Horizon ←
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── التحقق: إذا المستخدم موجود اصلاً، انقله للبروفايل ──
+(function() {
+  const oxid = localStorage.getItem('oryx_oxid');
+  if (oxid) {
+    // تحقق سريع من الـ API
+    fetch('https://oryx-horizon.vercel.app/api/verify?oxid=' + encodeURIComponent(oxid))
+      .then(r => r.json())
+      .then(data => {
+        if (data.valid) window.location.href = 'profile.html';
+      })
+      .catch(() => {});
+  }
+})();
+
+// ── إخفاء loading overlay ──
+window.addEventListener('load', () => {
+  const ov = document.getElementById('loading-overlay');
+  if (ov) setTimeout(() => ov.style.opacity = '0', 400);
+  setTimeout(() => { const ov2 = document.getElementById('loading-overlay'); if(ov2) ov2.style.display='none'; }, 900);
+});
+
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function showToast(msg, type) {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const t = document.createElement('div');
+  t.className = `toast toast-${type || 'info'}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+async function handleOxidLogin() {
+  const oxid  = document.getElementById('oxid-input').value.trim();
+  const btn   = document.getElementById('btn-oxid-login');
+  const errEl = document.getElementById('auth-error');
+
+  errEl.classList.remove('show');
+
+  if (!oxid) {
+    showError('أدخل الـ OXID الخاص فيك');
+    return;
+  }
+
+  btn.disabled     = true;
+  btn.textContent  = '⏳ جاري التحقق...';
+
+  try {
+    const res  = await fetch('https://oryx-horizon.vercel.app/api/verify?oxid=' + encodeURIComponent(oxid));
+    const data = await res.json();
+
+    if (data.valid && data.user) {
+      localStorage.setItem('oryx_oxid',  oxid);
+      localStorage.setItem('oryx_user',  JSON.stringify(data.user));
+      showToast('✅ أهلاً ' + (data.user.name || data.user.oxid) + '!', 'success');
+      setTimeout(() => window.location.href = 'profile.html', 700);
+    } else {
+      showError('❌ OXID غير صحيح أو منتهي الصلاحية. تحقق وحاول مرة ثانية.');
+      btn.disabled    = false;
+      btn.textContent = 'ادخل بـ OXID →';
+    }
+  } catch (_) {
+    showError('⚠️ تعذّر الاتصال بالسيرفر. تحقق من اتصالك وحاول مرة ثانية.');
+    btn.disabled    = false;
+    btn.textContent = 'ادخل بـ OXID →';
+  }
+}
+
+// ── دخول بـ Enter ──
+document.addEventListener('keypress', e => {
+  if (e.key === 'Enter') handleOxidLogin();
+});
+</script>
+
+</body>
+</html>

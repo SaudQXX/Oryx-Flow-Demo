@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حسابي — أوريكس فلو</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="assets/oryx-logo.png" />
+  <script src="i18n.js"></script>
+  <style>
+    .avatar-wrap { position:relative; width:88px; height:88px; border-radius:50%; cursor:pointer; flex-shrink:0; }
+    .avatar-img { width:88px; height:88px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); box-shadow:0 0 16px rgba(234,255,0,0.25); }
+    .avatar-initials { width:88px; height:88px; border-radius:50%; background:var(--card2); border:2px solid var(--accent); box-shadow:0 0 16px rgba(234,255,0,0.25); display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:2rem; font-weight:900; color:var(--accent); }
+    .upload-section { display:none; }
+    .upload-section.active { display:block; }
+    .my-game-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; transition:0.2s; }
+    .my-game-card:hover { border-color:rgba(234,255,0,0.2); }
+    .my-game-thumb { height:120px; background:linear-gradient(135deg,var(--card2),#1a1a1a); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+    .my-game-thumb img { width:100%; height:100%; object-fit:cover; }
+    .my-game-info { padding:14px; }
+    .my-game-title { font-family:var(--font-head); font-size:0.9rem; margin-bottom:6px; }
+    .my-game-stats { display:flex; gap:10px; margin-bottom:8px; font-size:0.78rem; color:var(--grey); }
+    .my-game-actions { display:flex; gap:8px; }
+    .my-game-apex-badge { position:absolute; top:8px; left:8px; background:rgba(0,255,136,0.15); border:1px solid var(--apex); color:var(--apex); font-size:0.6rem; padding:2px 7px; border-radius:2px; font-family:var(--font-mono); }
+    @media(max-width:900px){ .profile-grid{grid-template-columns:1fr !important;} }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <img src="assets/oryx-logo.png" class="loading-logo" alt="Oryx" />
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+<div id="toast-container"></div>
+
+<!-- Delete Game Modal -->
+
+<!-- ══ DELETE ACCOUNT CONFIRMATION MODAL ══ -->
+<div class="modal-overlay" id="delete-account-modal" onclick="if(event.target===this)closeDeleteAccountModal()">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 style="color:var(--red)">⚠️ حذف الحساب</h3>
+      <button class="modal-close" onclick="closeDeleteAccountModal()">✕</button>
+    </div>
+    <p style="color:var(--grey);line-height:1.75;margin-bottom:8px">
+      هل أنت متأكد أنك تريد حذف حسابك؟
+    </p>
+    <p style="color:var(--grey2);font-size:0.85rem;line-height:1.7;margin-bottom:24px">
+      سيتم حذف جميع ألعابك وبياناتك نهائياً ولا يمكن التراجع عن هذا الإجراء.
+    </p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost w-full" id="delete-account-cancel-btn" onclick="closeDeleteAccountModal()">إلغاء</button>
+      <button class="btn btn-danger w-full" id="delete-account-confirm-btn" onclick="executeDeleteAccount()">🗑 تأكيد الحذف</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⚠️ حذف اللعبة</h3>
+      <button class="modal-close" onclick="closeModal('confirm-modal')">✕</button>
+    </div>
+    <p style="color:var(--grey);margin-bottom:24px;line-height:1.7">واثق تبي تحذف اللعبة هذي؟ هذا الإجراء ما يرجع.</p>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-ghost w-full" onclick="closeModal('confirm-modal')">إلغاء</button>
+      <button class="btn btn-danger w-full" id="confirm-delete-btn" onclick="confirmDelete()">احذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal" style="max-width:520px;max-height:92vh;overflow-y:auto">
+    <div class="modal-header">
+      <h3>🚀 ارفع لعبة جديدة</h3>
+      <button class="modal-close" onclick="closeModal('upload-modal')">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(234,255,0,0.05);border:1px solid rgba(234,255,0,0.15);border-radius:6px;margin-bottom:20px;font-size:0.82rem;color:var(--grey)">
+      <span style="font-size:1.2rem">🎮</span>
+      <div>لعبتك تستاهل تتشاف — ارفعها الحين وخلّ اللاعبين يكتشفون عبقريتك! 🔥</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label>اسم اللعبة <span style="color:var(--red)">*</span></label>
+        <input type="text" id="up-title" placeholder="لعبتي الرهيبة" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label>الوصف <span style="color:var(--red)">*</span></label>
+        <textarea id="up-desc" placeholder="وش تتكلم عنه لعبتك؟" rows="3" style="resize:none"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label>النوع</label>
+          <select id="up-genre">
+            <option value="">اختر النوع...</option>
+            <option value="أكشن">⚔️ أكشن</option>
+            <option value="مغامرة">🗺️ مغامرة</option>
+            <option value="ألغاز">🧩 ألغاز</option>
+            <option value="تقمص أدوار">🧙 تقمص أدوار</option>
+            <option value="استراتيجية">♟️ استراتيجية</option>
+            <option value="منصات">🏃 منصات</option>
+            <option value="تصويب">🎯 تصويب</option>
+            <option value="رياضة">⚽ رياضة</option>
+            <option value="ثاني">🎮 ثاني</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المنصة</label>
+          <select id="up-platform">
+            <option value="pc">🖥️ بيسي</option>
+            <option value="mobile">📱 جوال</option>
+            <option value="both">🌐 الاثنين</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ملف اللعبة (ZIP) <span style="color:var(--red)">*</span>
+          <span style="color:var(--grey2);font-size:0.73rem;margin-right:6px">أقصى 25MB</span>
+        </label>
+        <div class="upload-zone" id="up-file-zone" onclick="document.getElementById('up-file-input').click()">
+          <div class="upload-icon">📦</div>
+          <div class="upload-text" id="up-file-text">اضغط لاختيار ملف .zip</div>
+          <div class="upload-hint">.zip فقط — أقصى 25MB</div>
+        </div>
+        <input type="file" id="up-file-input" accept=".zip" style="display:none" onchange="handleUpFile(this)"/>
+        <div id="up-file-info" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:4px;font-size:0.82rem;color:var(--apex)">
+          ✅ <span id="up-file-name"></span> — <span id="up-file-size"></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>صورة الغلاف <span style="color:var(--red)">*</span>
+          <span style="color:var(--grey2);font-size:0.73rem;margin-right:6px">JPG/PNG/WebP</span>
+        </label>
+        <div class="upload-zone" id="up-thumb-zone" onclick="document.getElementById('up-thumb-input').click()">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text" id="up-thumb-text">اضغط لاختيار صورة</div>
+          <div class="upload-hint">تُعرض مع اللعبة في المنصة</div>
+        </div>
+        <input type="file" id="up-thumb-input" accept="image/*" style="display:none" onchange="handleUpThumb(this)"/>
+        <div id="up-thumb-preview" style="display:none;margin-top:10px;position:relative">
+          <img id="up-thumb-img" style="width:100%;max-height:130px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"/>
+          <button onclick="clearThumb()" style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.75);border:none;color:white;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
+      </div>
+      <div id="up-progress-wrap" style="display:none">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.85rem">
+          <span style="color:var(--grey)" id="up-progress-step">جاري الرفع...</span>
+          <span class="accent" id="up-progress-pct">0%</span>
+        </div>
+        <div class="progress-wrap" style="height:10px">
+          <div class="progress-fill" id="up-progress-bar" style="width:0%;transition:width 0.4s ease"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary w-full" onclick="submitUpload()" id="upload-btn" style="margin-top:4px">
+        🚀 ارفع اللعبة
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <a href="index.html" class="nav-logo">
+      <img src="assets/oryx-logo.png" alt="Oryx Flow" />
+      <span>ORYX <em>FLOW</em></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" data-i18n="nav_home">الرئيسية</a></li>
+      <li><a href="mobile.html" data-i18n="nav_mobile">📱 ألعاب الجوال</a></li>
+      <li><a href="profile.html" class="active" data-i18n="nav_profile">حسابي</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="lang-btn" id="lang-toggle-btn" onclick="i18n.toggle()">EN</button>
+      <div class="nav-coins">
+        <img src="assets/oryx-coins.webp" alt="coins" />
+        <span class="js-coins">0</span>
+      </div>
+      <button onclick="logout()" class="btn btn-outline btn-sm" data-i18n="nav_logout">طلعت</button>
+    </div>
+  </div>
+</nav>
+
+<!-- PROFILE HEADER -->
+<div class="profile-header">
+  <div class="container">
+    <div class="flex gap-24" style="flex-wrap:wrap;align-items:center">
+
+      <!-- Avatar — initials only, no upload -->
+      <div style="position:relative;flex-shrink:0">
+        <div id="profile-avatar-container" style="width:88px;height:88px;border-radius:50%;overflow:hidden;border:2px solid var(--accent);box-shadow:0 0 16px rgba(234,255,0,0.25)">
+          <div class="avatar-initials js-avatar-text" id="profile-avatar-initial" style="width:88px;height:88px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:2rem;font-weight:900;color:var(--accent)">؟</div>
+        </div>
+        <!-- Delete account button -->
+        <button onclick="confirmDeleteAccount()" title="حذف الحساب"
+          style="position:absolute;top:-4px;left:-4px;width:26px;height:26px;border-radius:50%;background:#ff3b3b;border:2px solid var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.7rem;transition:0.2s;z-index:2;opacity:0.75"
+          onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'"
+          onmouseout="this.style.opacity='0.75';this.style.transform='scale(1)'">🗑️</button>
+      </div>
+
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <!-- PRIMARY: Firebase Auth displayName -->
+          <h1 class="profile-name" id="profile-displayname" style="font-size:1.6rem"> </h1>
+          <!-- Admin badge — shown only for admin account -->
+          <span id="admin-badge" style="display:none;align-items:center;background:linear-gradient(135deg,#ff4444,#cc0000);color:#fff;font-family:var(--font-mono);font-size:0.65rem;font-weight:700;padding:3px 9px;border-radius:3px;letter-spacing:1.5px;box-shadow:0 0 10px rgba(255,68,68,0.4);text-transform:uppercase">ADMIN</span>
+          <!-- Edit Name: shown only once (canEditName===true) -->
+          <button class="btn btn-ghost btn-sm" id="edit-name-btn"
+            onclick="openEditNamePanel()"
+            style="font-size:0.78rem;padding:5px 12px;display:none"
+            title="يمكن تعديل الاسم مرة واحدة فقط">✏️ تعديل الاسم</button>
+        </div>
+        <div style="font-family:var(--font-mono);color:var(--accent);font-size:0.85rem;margin-top:2px">
+          @<span id="profile-username-display"> </span>
+        </div>
+        <div id="profile-email" style="color:var(--grey);font-size:0.85rem;margin-top:2px"></div>
+        <div class="profile-badges" id="profile-badges" style="margin-top:8px"></div>
+
+        <!-- Edit Name Panel -->
+        <div id="edit-name-panel" style="display:none;margin-top:14px;padding:14px 16px;background:rgba(234,255,0,0.04);border:1px solid rgba(234,255,0,0.2);border-radius:8px">
+          <div style="font-size:0.85rem;color:var(--accent);font-weight:600;margin-bottom:10px">
+            ✏️ تعديل اسم العرض
+            <span style="color:var(--grey2);font-weight:400;font-size:0.78rem"> — مرة واحدة فقط</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <input type="text" id="new-display-name-input"
+              placeholder="أدخل اسم العرض الجديد..."
+              maxlength="40" style="flex:1;min-width:160px"
+              onkeydown="if(event.key==='Enter') saveDisplayName()" />
+            <button class="btn btn-primary btn-sm" onclick="saveDisplayName()" id="save-name-btn">💾 حفظ</button>
+            <button class="btn btn-ghost btn-sm" onclick="closeEditNamePanel()">إلغاء</button>
+          </div>
+          <div id="edit-name-msg" style="margin-top:8px;font-size:0.78rem;color:var(--grey2)">
+            ⚠️ بعد الحفظ لن تتمكن من تعديل اسمك مجدداً
+          </div>
+        </div>
+
+        <div class="streak-display mt-8">
+          <span>🔥</span>
+          <span style="color:var(--grey);font-size:0.88rem">السلسلة:</span>
+          <span class="streak-num" id="profile-streak">0</span>
+          <span style="color:var(--grey);font-size:0.82rem">يوم</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE BODY -->
+<div class="section">
+  <div class="container">
+    <div class="profile-grid" style="display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:start">
+
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <!-- Coins -->
+        <div class="coin-section">
+          <div class="coin-header">
+            <img src="assets/oryx-coins.webp" class="coin-img" alt="coins" />
+            <div>
+              <div style="font-size:0.78rem;color:var(--grey);margin-bottom:2px">كوينز أوريكس</div>
+              <div class="coin-amount js-coins">0</div>
+            </div>
+            <span class="coin-max" style="margin-right:auto">/ 1000</span>
+          </div>
+          <div class="progress-wrap"><div class="progress-fill js-coin-bar" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.72rem;color:var(--grey2)">
+            <span>0</span><span id="coin-pct">0%</span><span>1000</span>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="card">
+          <h3 style="margin-bottom:16px" data-i18n="activity_title">📊 إحصائيات النشاط</h3>
+          <div style="display:flex;flex-direction:column;gap:13px">
+            <div class="flex-between"><span style="color:var(--grey);font-size:0.93rem">التعليقات</span><span class="mono accent" id="stat-comments">0</span></div>
+            <div class="flex-between"><span style="color:var(--grey);font-size:0.93rem">الألعاب المرفوعة</span><span class="mono accent" id="stat-uploads">0 / 3</span></div>
+            <div class="flex-between"><span style="color:var(--grey);font-size:0.93rem">سلسلة الدخول</span><span class="mono accent" id="stat-streak2">0</span></div>
+            <div class="flex-between"><span style="color:var(--grey);font-size:0.93rem">الأولوية</span><span class="mono" id="stat-priority" style="color:var(--grey2)">—</span></div>
+          </div>
+        </div>
+
+        <!-- Quick Rewards -->
+        <div class="card">
+          <h3 style="margin-bottom:14px">⚡ المكافآت السريعة</h3>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-outline btn-sm w-full" onclick="claimDailyLogin()">🔥 دخول يومي (+5)</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:28px">
+        <!-- Trophies -->
+        <div class="card card-glow">
+          <div class="flex-between" style="margin-bottom:22px">
+            <h3>🏆 كؤوسي</h3>
+            <span style="font-size:0.8rem;color:var(--grey)">افتح كؤوس من صفحات الألعاب</span>
+          </div>
+          <div class="trophy-grid">
+            <div class="trophy-item locked" data-trophy="bronze">
+              <img src="assets/trophy-bronze.webp" class="trophy-img" alt="Bronze" />
+              <div class="trophy-name">برونز</div>
+              <div class="trophy-coins">+20</div>
+            </div>
+            <div class="trophy-item locked" data-trophy="silver">
+              <img src="assets/trophy-silver.webp" class="trophy-img" alt="Silver" />
+              <div class="trophy-name">سيلفر</div>
+              <div class="trophy-coins">+40</div>
+            </div>
+            <div class="trophy-item locked" data-trophy="gold">
+              <img src="assets/trophy-gold.webp" class="trophy-img" alt="Gold" />
+              <div class="trophy-name">جولد</div>
+              <div class="trophy-coins">+70</div>
+            </div>
+            <div class="trophy-item apex-trophy locked" data-trophy="apex">
+              <img src="assets/trophy-apex.webp" class="trophy-img" alt="Apex" />
+              <div class="trophy-name" style="color:var(--apex)">⚜️ أبيكس</div>
+              <div class="trophy-coins">+150</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Games -->
+        <div class="card">
+          <div class="flex-between" style="margin-bottom:22px">
+            <h3>🎮 ألعابي</h3>
+            <button class="btn btn-primary btn-sm" onclick="openUploadModal()">+ ارفع لعبة</button>
+          </div>
+          <div id="my-games-grid" class="grid-3">
+            <div class="empty-state" style="grid-column:1/-1;padding:40px 20px">
+              <div class="empty-state-icon">🎮</div>
+              <h3>ما عندك ألعاب بعد</h3>
+              <p>ارفع أول لعبة وابدأ!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import './app.js';
+  window.addEventListener('oryxUserReady', () => { loadProfileData(); loadMyGames(); });
+  const chk = setInterval(() => {
+    if (window.OryxApp?.currentUser !== undefined) {
+      clearInterval(chk);
+      if (window.OryxApp.currentUser && window.OryxApp.userData) { loadProfileData(); loadMyGames(); }
+    }
+  }, 250);
+  setTimeout(() => clearInterval(chk), 15000);
+</script>
+
+<script>
+function toggleNav() {
+  const l = document.querySelector('.nav-links'), h = document.getElementById('nav-hamburger');
+  if (!l) return;
+  const o = l.classList.toggle('nav-open'); if (h) h.classList.toggle('open', o);
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.navbar')) {
+    document.querySelector('.nav-links')?.classList.remove('nav-open');
+    document.getElementById('nav-hamburger')?.classList.remove('open');
+  }
+});
+
+const _upFiles = {};
+let _pendingDeleteId = null, _pendingDeleteData = null;
+const t = k => window.i18n ? window.i18n.t(k) : k;
+
+function closeModal(id) {
+  document.getElementById(id)?.classList.remove('open');
+  if (id === 'confirm-modal') { _pendingDeleteId = null; _pendingDeleteData = null; }
+  if (id === 'upload-modal') _resetUploadForm();
+}
+['confirm-modal','upload-modal'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', e => { if (e.target.id === id) closeModal(id); });
+});
+
+function openUploadModal() {
+  const isAdmin = window._isAdmin?.(window.OryxApp?.currentUser);
+  if (!isAdmin && (window.OryxApp?.userData?.gamesUploaded || 0) >= 3) {
+    showToast('وصلت للحد الأقصى — 3 ألعاب', 'error'); return;
+  }
+  document.getElementById('upload-modal').classList.add('open');
+}
+
+function _fmtBytes(b) { return b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB'; }
+
+function handleUpFile(input) {
+  const file = input.files[0]; if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.zip')) { showToast('يجب أن يكون الملف .zip فقط', 'error'); input.value=''; return; }
+  if (file.size > 25*1024*1024) { showToast(`الملف ${_fmtBytes(file.size)} — الحد الأقصى 25MB`, 'error'); input.value=''; return; }
+  _upFiles.gameFile = file;
+  document.getElementById('up-file-text').textContent = '✅ ' + file.name;
+  document.getElementById('up-file-name').textContent = file.name;
+  document.getElementById('up-file-size').textContent = _fmtBytes(file.size);
+  document.getElementById('up-file-info').style.display = 'block';
+}
+
+function handleUpThumb(input) {
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 5*1024*1024) { showToast('الصورة أكبر من 5MB', 'error'); input.value=''; return; }
+  _upFiles.thumbnail = file;
+  document.getElementById('up-thumb-text').textContent = '✅ ' + file.name;
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('up-thumb-img').src = e.target.result; document.getElementById('up-thumb-preview').style.display='block'; };
+  reader.readAsDataURL(file);
+}
+
+function clearThumb() {
+  _upFiles.thumbnail = null;
+  document.getElementById('up-thumb-input').value = '';
+  document.getElementById('up-thumb-text').textContent = 'اضغط لاختيار صورة';
+  document.getElementById('up-thumb-preview').style.display = 'none';
+}
+
+async function submitUpload() {
+  const title    = document.getElementById('up-title').value.trim();
+  const desc     = document.getElementById('up-desc').value.trim();
+  const genre    = document.getElementById('up-genre').value;
+  const platform = document.getElementById('up-platform').value || 'pc';
+  if (!title) { showToast('أدخل اسم اللعبة','error'); return; }
+  if (!desc)  { showToast('أدخل الوصف','error'); return; }
+  if (!_upFiles.gameFile)  { showToast('اختر ملف ZIP','error'); return; }
+  if (!_upFiles.thumbnail) { showToast('اختر صورة الغلاف','error'); return; }
+  const btn=document.getElementById('upload-btn'), progW=document.getElementById('up-progress-wrap');
+  const progBar=document.getElementById('up-progress-bar'), progPct=document.getElementById('up-progress-pct');
+  const progStp=document.getElementById('up-progress-step');
+  btn.disabled=true; btn.textContent='⏳ جاري الرفع...'; progW.style.display='block';
+  const setP=(pct,lbl)=>{ progBar.style.width=pct+'%'; progPct.textContent=pct+'%'; if(lbl) progStp.textContent=lbl; };
+  setP(5,'تحضير الملفات...');
+  try {
+    await window.uploadGame(
+      { title, description:desc, genre, platform, gameFile:_upFiles.gameFile, thumbnail:_upFiles.thumbnail },
+      pct => setP(Math.max(5,pct), pct<30?'تحويل الملف...':pct<65?'رفع ZIP...':pct<88?'رفع صورة الغلاف...':'حفظ البيانات...')
+    );
+    setP(100,'تم! 🎉');
+    await new Promise(r=>setTimeout(r,600));
+    showToast('🎮 تم رفع اللعبة بنجاح!','success');
+    closeModal('upload-modal');
+    await loadMyGames();
+    document.getElementById('stat-uploads').textContent=`${window.OryxApp.userData?.gamesUploaded||0} / 3`;
+  } catch(err) {
+    showToast('❌ '+(err.message||'فشل الرفع'),'error',6000);
+    progW.style.display='none';
+  } finally {
+    btn.disabled=false; btn.textContent='🚀 ارفع اللعبة';
+  }
+}
+
+function _resetUploadForm() {
+  ['up-title','up-desc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const g=document.getElementById('up-genre'); if(g) g.selectedIndex=0;
+  const p=document.getElementById('up-platform'); if(p) p.selectedIndex=0;
+  ['up-file-input','up-thumb-input'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('up-file-text').textContent='اضغط لاختيار ملف .zip';
+  document.getElementById('up-thumb-text').textContent='اضغط لاختيار صورة';
+  document.getElementById('up-file-info').style.display='none';
+  document.getElementById('up-thumb-preview').style.display='none';
+  document.getElementById('up-progress-wrap').style.display='none';
+  document.getElementById('up-progress-bar').style.width='0%';
+  Object.keys(_upFiles).forEach(k=>delete _upFiles[k]);
+}
+
+async function loadMyGames() {
+  const { currentUser } = window.OryxApp;
+  if (!currentUser) { console.log('[loadMyGames] No user — skipping'); return; }
+  const grid = document.getElementById('my-games-grid');
+  if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--grey)"><div style="font-size:1.5rem;margin-bottom:8px">⏳</div>جاري التحميل...</div>`;
+  try {
+    const games = await window.loadUserGames(currentUser.oxid);
+    console.log('User games loaded:', games.length);
+    renderMyGames(games);
+  } catch(err) {
+    console.error('[loadMyGames]', err);
+    if (grid) grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:50px 20px"><div class="empty-state-icon">⚠️</div><h3>تعذّر تحميل ألعابك</h3><button class="btn btn-outline btn-sm" style="margin-top:16px" onclick="loadMyGames()">↺ إعادة المحاولة</button></div>`;
+  }
+}
+
+function renderMyGames(games) {
+  const grid = document.getElementById('my-games-grid'); if (!grid) return;
+  if (!games.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:50px 20px"><div class="empty-state-icon">🎮</div><h3>ما عندك ألعاب بعد</h3><p>ارفع أول لعبة وابدأ!</p></div>`;
+    return;
+  }
+  grid.innerHTML = games.map(g => {
+    const sd = encodeURIComponent(JSON.stringify({ developerId:g.developerId, githubPath:g.githubPath||'', thumbPath:g.thumbPath||'' }));
+    return `<div class="my-game-card fade-in" id="gcard-${g.id}">
+      <div class="my-game-thumb" style="position:relative">
+        ${g.thumbnailURL?`<img src="${g.thumbnailURL}" alt="${g.title}" loading="lazy" style="width:100%;height:100%;object-fit:cover"/>`:
+          `<div style="font-family:var(--font-head);font-size:1.4rem;color:rgba(234,255,0,0.12)">${(g.title||'').substring(0,3).toUpperCase()}</div>`}
+        ${g.platform==='mobile'?`<div class="my-game-apex-badge">📱</div>`:g.platform==='both'?`<div class="my-game-apex-badge">🌐</div>`:''}
+      </div>
+      <div class="my-game-info">
+        <div class="my-game-title">${g.title}</div>
+        <div class="my-game-stats"><span>${g.genre||''}</span><span>📥 ${g.downloads||0}</span></div>
+        <p style="font-size:0.82rem;color:var(--grey);margin-bottom:10px;line-height:1.5">${(g.description||'').substring(0,75)}${(g.description||'').length>75?'...':''}</p>
+        <div class="my-game-actions">
+          <a href="game.html?id=${g.id}" class="btn btn-outline btn-sm" style="flex:1">عرض</a>
+          <button class="btn btn-danger btn-sm" onclick="startDelete('${g.id}','${sd}')">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function startDelete(id, enc) {
+  _pendingDeleteId=id; _pendingDeleteData=JSON.parse(decodeURIComponent(enc));
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+async function confirmDelete() {
+  if (!_pendingDeleteId) return;
+  const btn=document.getElementById('confirm-delete-btn');
+  btn.disabled=true; btn.textContent='⏳ جاري الحذف...';
+  try {
+    await window.deleteGame(_pendingDeleteId, _pendingDeleteData);
+    const card=document.getElementById(`gcard-${_pendingDeleteId}`);
+    if (card) { card.style.transition='opacity 0.3s,transform 0.3s'; card.style.opacity='0'; card.style.transform='scale(0.9)'; setTimeout(()=>{ card.remove(); _checkEmpty(); },320); }
+    document.getElementById('stat-uploads').textContent=`${window.OryxApp.userData?.gamesUploaded||0} / 3`;
+    showToast('تم حذف اللعبة','success');
+  } catch(err) { showToast('❌ '+err.message,'error'); }
+  finally { btn.disabled=false; btn.textContent='احذف'; closeModal('confirm-modal'); }
+}
+
+function _checkEmpty() {
+  const grid=document.getElementById('my-games-grid');
+  if (grid&&!grid.querySelector('.my-game-card'))
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;padding:50px 20px"><div class="empty-state-icon">🎮</div><h3>ما عندك ألعاب بعد</h3><p>ارفع أول لعبة وابدأ!</p></div>`;
+}
+
+// PROFILE DATA
+function loadProfileData() {
+  const ud      = window.OryxApp?.userData;
+  const oxUser  = window.OryxApp?.currentUser; // { oxid, name, email }
+  if (!ud && !oxUser) return;
+
+  const displayName = ud?.displayName || oxUser?.name || '—';
+  const ini = (displayName || 'U')[0].toUpperCase();
+  const $   = id => document.getElementById(id);
+  const set = (id,v) => { const el=$(id); if(el) el.textContent=v; };
+
+  set('profile-displayname', displayName);
+  set('profile-username-display', ud?.username || oxUser?.oxid || '');
+
+  // Admin badge — show for admin OXID or admin email
+  const adminBadgeEl = $('admin-badge');
+  if (adminBadgeEl) adminBadgeEl.style.display = window._isAdmin?.(oxUser) ? 'inline-flex' : 'none';
+
+  // Edit Name button: show only if canEditName === true
+  const enb = $('edit-name-btn');
+  if (enb) {
+    enb.style.display = (ud?.canEditName===true) ? 'inline-flex' : 'none';
+    if (ud?.canEditName===false) { const p=$('edit-name-panel'); if(p) p.style.display='none'; }
+  }
+
+  set('profile-email',   ud?.email || oxUser?.email || '');
+  set('profile-streak',  ud?.loginStreak || 0);
+  set('stat-streak2',    ud?.loginStreak || 0);
+  set('stat-comments',   ud?.commentCount || 0);
+  set('stat-uploads',    `${ud?.gamesUploaded||0} / 3`);
+  const cp=$('coin-pct'); if(cp) cp.textContent=Math.round(((ud?.coins||0)/1000)*100)+'%';
+
+  // Avatar: initials only — no image upload
+  const ac = $('profile-avatar-container');
+  if (ac) {
+    ac.innerHTML = `<div class="avatar-initials" style="width:88px;height:88px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:2rem;font-weight:900;color:var(--accent)">${ini}</div>`;
+  }
+
+  const pe=$('stat-priority');
+  if (pe&&ud?.hasPriority) { pe.textContent='★ مفعّل'; pe.style.color='var(--accent)'; }
+  const be=$('profile-badges');
+  if (be&&(ud?.badges?.includes('elite')||ud?.hasPriority))
+    be.innerHTML=`<span class="badge-elite">★ ELITE</span>`;
+}
+
+async function _grantEliteBadge() {
+  const {currentUser,userData,db,_userDocId}=window.OryxApp; if(!currentUser||!_userDocId) return;
+  const {updateDoc,doc,arrayUnion}=await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+  await updateDoc(doc(db,'users',_userDocId),{badges:arrayUnion('elite'),hasPriority:true});
+  userData.badges=[...(userData.badges||[]),'elite']; userData.hasPriority=true;
+  document.getElementById('profile-badges').innerHTML=`<span class="badge-elite">★ ELITE</span>`;
+  showToast('🏆 حصلت على شارة Elite!','trophy');
+}
+
+
+
+// Delete account confirmation — custom popup (no browser confirm)
+function confirmDeleteAccount() {
+  document.getElementById('delete-account-modal').classList.add('open');
+}
+
+function closeDeleteAccountModal() {
+  document.getElementById('delete-account-modal').classList.remove('open');
+}
+
+async function executeDeleteAccount() {
+  const confirmBtn = document.getElementById('delete-account-confirm-btn');
+  const cancelBtn  = document.getElementById('delete-account-cancel-btn');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = window.i18n?.current==='ar' ? '⏳ جاري الحذف...' : '⏳ Deleting...'; }
+  if (cancelBtn)  cancelBtn.disabled = true;
+  try {
+    await window.deleteAccount();
+  } catch(err) {
+    showToast('❌ ' + (err.message || 'فشل حذف الحساب'), 'error', 6000);
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = window.i18n?.current==='ar' ? '🗑 تأكيد الحذف' : '🗑 Delete'; }
+    if (cancelBtn)  cancelBtn.disabled = false;
+    closeDeleteAccountModal();
+  }
+}
+
+// Edit Name Panel
+function openEditNamePanel() {
+  const ud=window.OryxApp?.userData;
+  if (!ud?.canEditName) { showToast('لقد استخدمت حق تعديل الاسم مسبقاً','error'); return; }
+  const panel=document.getElementById('edit-name-panel');
+  const input=document.getElementById('new-display-name-input');
+  if(!panel||!input) return;
+  input.value = window.OryxApp?.currentUser?.displayName || ud.displayName || '';
+  panel.style.display='block';
+  input.focus();
+  panel.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function closeEditNamePanel() {
+  const p=document.getElementById('edit-name-panel'); if(p) p.style.display='none';
+}
+
+async function saveDisplayName() {
+  const input=document.getElementById('new-display-name-input');
+  const btn=document.getElementById('save-name-btn');
+  const msg=document.getElementById('edit-name-msg');
+  const newName=(input?.value||'').trim();
+  if (!newName) { showToast('أدخل اسم العرض','error'); return; }
+  if (newName.length<3) { showToast('اسم العرض يجب أن يكون 3 أحرف على الأقل','error'); return; }
+  if(btn){ btn.disabled=true; btn.textContent='⏳...'; }
+  try {
+    const saved=await window.updateDisplayName(newName);
+    const el=document.getElementById('profile-displayname'); if(el) el.textContent=saved;
+    const enb=document.getElementById('edit-name-btn'); if(enb) enb.style.display='none';
+    if(msg){ msg.textContent='✅ تم تحديث اسمك بنجاح!'; msg.style.color='var(--apex)'; }
+    showToast('✅ تم تحديث اسم العرض!','success');
+    setTimeout(()=>closeEditNamePanel(),2000);
+  } catch(err){
+    if(msg){ msg.textContent='❌ '+(err.message||'فشل'); msg.style.color='var(--red)'; }
+    showToast('❌ '+(err.message||'فشل'),'error');
+  } finally { if(btn){ btn.disabled=false; btn.textContent='💾 حفظ'; } }
+}
+
+async function claimDailyLogin() {
+  const {currentUser,db,_userDocId}=window.OryxApp; if(!currentUser||!_userDocId) return;
+  const {getDoc,doc,updateDoc,serverTimestamp}=await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+  const snap=await getDoc(doc(db,'users',_userDocId)); const d=snap.data();
+  const last=d.lastLogin?.toDate?.()?.toDateString?.()||'';
+  if(last===new Date().toDateString()){ showToast('جمعت مكافأتك اليوم بالفعل!','error'); return; }
+  await updateDoc(doc(db,'users',_userDocId),{lastLogin:serverTimestamp()});
+  await window.addCoins(5);
+  showToast('🔥 +5 كوينز! واصل!','coin');
+}
+
+window.addEventListener('langChanged',()=>{ if(window.OryxApp?.currentUser){ loadProfileData(); loadMyGames(); } });
+setInterval(()=>{ const c=window.OryxApp?.userData?.coins||0; const el=document.getElementById('coin-pct'); if(el) el.textContent=Math.round((c/1000)*100)+'%'; },1500);
+</script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ألعاب الجوال — أوريكس فلو</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="assets/oryx-logo.png" />
+  <script src="i18n.js"></script>
+  <style>
+    .mobile-hero {
+      background: linear-gradient(135deg, #0b0b0b 0%, #111 40%, rgba(234,255,0,0.04) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 0 40px;
+      text-align: center;
+    }
+    .mobile-hero-icon {
+      font-size: 3.5rem;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 20px rgba(234,255,0,0.3));
+    }
+    .mobile-hero h1 { font-size: clamp(1.8rem, 5vw, 3rem); margin-bottom: 12px; }
+    .mobile-hero p  { color: var(--grey); max-width: 500px; margin: 0 auto; line-height: 1.8; }
+
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 20px 0;
+    }
+    .filter-chip {
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card2);
+      color: var(--grey);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.18s;
+      white-space: nowrap;
+    }
+    .filter-chip:hover  { border-color: var(--grey2); color: var(--white); }
+    .filter-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(234,255,0,0.07); }
+
+    .mobile-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(234,255,0,0.1);
+      border: 1px solid rgba(234,255,0,0.25);
+      color: var(--accent);
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+    }
+
+    .game-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .game-card:hover { border-color: rgba(234,255,0,0.25); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .game-thumb {
+      height: 160px;
+      background: linear-gradient(135deg, var(--card2), #1a1a1a);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+    }
+    .game-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .game-thumb-text { font-family: var(--font-head); font-size: 2rem; color: rgba(234,255,0,0.1); }
+    .game-info { padding: 16px; }
+    .game-title { font-family: var(--font-head); font-size: 1rem; margin-bottom: 6px; }
+    .game-meta  { display: flex; gap: 10px; margin-bottom: 10px; font-size: 0.8rem; color: var(--grey); flex-wrap: wrap; align-items: center; }
+    .game-genre { background: var(--card2); border: 1px solid var(--border); padding: 2px 8px; border-radius: 3px; font-size: 0.72rem; color: var(--grey2); }
+
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+    .stats-strip-item {
+      background: var(--card);
+      padding: 16px;
+      text-align: center;
+    }
+    .stats-strip-num   { font-family: var(--font-head); font-size: 1.6rem; font-weight: 900; color: var(--accent); }
+    .stats-strip-label { font-size: 0.78rem; color: var(--grey); margin-top: 4px; }
+
+    @media (max-width: 600px) {
+      .stats-strip { grid-template-columns: 1fr 1fr; }
+      .stats-strip-item:last-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <img src="assets/oryx-logo.png" class="loading-logo" alt="Oryx" />
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+<div id="toast-container"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <a href="index.html" class="nav-logo">
+      <img src="assets/oryx-logo.png" alt="Oryx Flow" />
+      <span>ORYX <em>FLOW</em></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" data-i18n="nav.home">الرئيسية</a></li>
+      <li><a href="mobile.html" class="active">📱 ألعاب الجوال</a></li>
+      <li><a href="profile.html" class="nav-logged-in hidden" data-i18n="nav.profile">حسابي</a></li>
+    </ul>
+    <div class="nav-right" style="gap:10px">
+      <button class="lang-btn" id="lang-toggle-btn" onclick="i18n.toggle()">EN</button>
+      <div class="nav-coins nav-logged-in hidden">
+        <img src="assets/oryx-coins.webp" alt="coins" />
+        <span class="js-coins">0</span>
+      </div>
+      <a href="login.html" class="btn btn-outline btn-sm nav-logged-out" data-i18n="nav.login">دخول</a>
+      <button onclick="logout()" class="btn btn-ghost btn-sm nav-logged-in hidden" data-i18n="nav.logout">خروج</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="mobile-hero">
+  <div class="container">
+    <div class="mobile-hero-icon">📱</div>
+    <div class="tag" style="margin-bottom:16px">مكتبة الجوال</div>
+    <h1>ألعاب <span class="accent">الجوال</span></h1>
+    <p>ألعاب مصممة للمس وشاشات الجوال. العب أينما كنت.</p>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="section">
+  <div class="container">
+
+    <!-- Stats Strip -->
+    <div class="stats-strip" id="mobile-stats-strip" style="margin-bottom:32px">
+      <div class="stats-strip-item">
+        <div class="stats-strip-num" id="stat-mobile-total">—</div>
+        <div class="stats-strip-label">ألعاب الجوال</div>
+      </div>
+      <div class="stats-strip-item">
+        <div class="stats-strip-num" id="stat-mobile-plays">—</div>
+        <div class="stats-strip-label">إجمالي التحميلات</div>
+      </div>
+      <div class="stats-strip-item">
+        <div class="stats-strip-num">📱</div>
+        <div class="stats-strip-label">متوافقة مع الجوال</div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <span style="font-size:0.85rem;color:var(--grey);margin-left:4px">تصفية:</span>
+      <button class="filter-chip active" data-genre="all" onclick="filterGames('all', this)">🎮 الكل</button>
+      <button class="filter-chip" data-genre="أكشن"       onclick="filterGames('أكشن', this)">⚔️ أكشن</button>
+      <button class="filter-chip" data-genre="مغامرة"     onclick="filterGames('مغامرة', this)">🗺️ مغامرة</button>
+      <button class="filter-chip" data-genre="ألغاز"      onclick="filterGames('ألغاز', this)">🧩 ألغاز</button>
+      <button class="filter-chip" data-genre="استراتيجية" onclick="filterGames('استراتيجية', this)">♟️ استراتيجية</button>
+      <button class="filter-chip" data-genre="منصات"      onclick="filterGames('منصات', this)">🏃 منصات</button>
+      <button class="filter-chip" data-genre="تصويب"      onclick="filterGames('تصويب', this)">🎯 تصويب</button>
+      <button class="filter-chip" data-genre="رياضة"      onclick="filterGames('رياضة', this)">⚽ رياضة</button>
+    </div>
+
+    <!-- Games Grid -->
+    <div class="grid-3" id="mobile-games-grid">
+      <div class="card" style="opacity:0.4;text-align:center;padding:40px;grid-column:1/-1" id="mobile-loading">
+        <div style="font-size:2rem;margin-bottom:12px">⏳</div>
+        <p>جاري تحميل ألعاب الجوال...</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <img src="assets/oryx-logo.png" style="height:32px;opacity:0.5;margin-bottom:12px" alt="Oryx" />
+    <p data-i18n="footer.rights">© 2024 Oryx Flow. منصة ألعاب اجتماعية.</p>
+    <p style="margin-top:8px">
+      <a href="index.html" data-i18n="footer.links.home">الرئيسية</a> ·
+      <a href="mobile.html">📱 ألعاب الجوال</a> ·
+      <a href="login.html" data-i18n="footer.links.login">دخول</a>
+    </p>
+  </div>
+</footer>
+
+<script type="module">
+  import './app.js';
+
+  let allMobileGames = [];
+  let activeGenre    = 'all';
+
+  async function loadMobileGames() {
+    const grid    = document.getElementById('mobile-games-grid');
+    const loading = document.getElementById('mobile-loading');
+    try {
+      const all = await window.loadAllGames();
+      allMobileGames = all.filter(g => g.platform === 'mobile');
+
+      // Stats
+      document.getElementById('stat-mobile-total').textContent = allMobileGames.length || '0';
+      const totalDownloads = allMobileGames.reduce((s, g) => s + (g.downloads || 0), 0);
+      document.getElementById('stat-mobile-plays').textContent = totalDownloads;
+
+      if (loading) loading.remove();
+      renderGames(allMobileGames);
+    } catch(e) {
+      if (loading) loading.remove();
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon">⚠️</div>
+        <h3>تعذّر تحميل الألعاب</h3>
+      </div>`;
+    }
+  }
+
+  window.filterGames = function(genre, btn) {
+    activeGenre = genre;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const filtered = genre === 'all' ? allMobileGames : allMobileGames.filter(g => g.genre === genre);
+    renderGames(filtered);
+  };
+
+  function renderGames(games) {
+    const grid = document.getElementById('mobile-games-grid');
+    if (!games.length) {
+      const msg = activeGenre === 'all'
+        ? '<h3>ما في ألعاب جوال بعد</h3><p>كن أول من يرفع لعبة جوال! من صفحة <a href="profile.html" style="color:var(--accent)">حسابك</a>.</p>'
+        : `<h3>ما في ألعاب "${activeGenre}" للجوال بعد</h3><p>جرب نوع ثاني أو ارفع لعبة!</p>`;
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:60px 20px">
+        <div class="empty-state-icon">📱</div>${msg}</div>`;
+      return;
+    }
+    const isAr = window.i18n?.current === 'ar';
+    grid.innerHTML = '';
+    games.forEach(game => {
+      const card = document.createElement('div');
+      card.className = 'game-card fade-in';
+      card.onclick   = () => window.location.href = `game.html?id=${game.id}`;
+      card.innerHTML = `
+        <div class="game-thumb">
+          ${game.thumbnailURL
+            ? `<img src="${game.thumbnailURL}" alt="${game.title}" />`
+            : `<div class="game-thumb-text">${(game.title||'').substring(0,4).toUpperCase()}</div>`}
+          <div style="position:absolute;top:10px;right:10px">
+            <span class="mobile-badge">📱 جوال</span>
+          </div>
+        </div>
+        <div class="game-info">
+          <div class="game-title">${game.title}</div>
+          <div class="game-meta">
+            <span class="game-genre">${game.genre || ''}</span>
+            <span>📥 ${game.downloads || 0}</span>
+            ${game.videoURL ? '<span>🎬</span>' : ''}
+          </div>
+          <p style="font-size:0.83rem;color:var(--grey);line-height:1.6;margin-bottom:12px">
+            ${(game.description||'').substring(0,90)}${(game.description||'').length>90?'...':''}
+          </p>
+          <a href="game.html?id=${game.id}" class="btn btn-outline btn-sm w-full">
+            ${isAr ? 'العب الحين ←' : 'PLAY →'}
+          </a>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  setTimeout(loadMobileGames, 1000);
+  window.addEventListener('langChanged', () => setTimeout(loadMobileGames, 50));
+</script>
+
+<script>
+function toggleNav() {
+  const links = document.querySelector('.nav-links');
+  const ham   = document.getElementById('nav-hamburger');
+  if (!links) return;
+  const open = links.classList.toggle('nav-open');
+  if (ham) ham.classList.toggle('open', open);
+}
+// Close nav on outside click
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.navbar')) {
+    document.querySelector('.nav-links')?.classList.remove('nav-open');
+    document.getElementById('nav-hamburger')?.classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>

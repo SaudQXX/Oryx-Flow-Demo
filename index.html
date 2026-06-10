@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>أوريكس فلو — منصة الجيمنق</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="assets/oryx-logo.png"/>
+  <script src="i18n.js"></script>
+  <style>
+    /* ── Game Cards: 90% image / 10% title ── */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 18px;
+    }
+    .g-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      aspect-ratio: 3/4;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+    }
+    .g-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--accent);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(234,255,0,0.2);
+    }
+    .g-card.neon-glow {
+      box-shadow: 0 0 18px rgba(234,255,0,0.1);
+    }
+    .g-card-img {
+      flex: 0 0 90%;
+      overflow: hidden;
+      background: var(--card2);
+      position: relative;
+    }
+    .g-card-img img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .g-card:hover .g-card-img img { transform: scale(1.05); }
+    .g-card-img-ph {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 2.2rem;
+      color: rgba(234,255,0,0.08); letter-spacing: 4px;
+    }
+    .g-card-hover-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .g-card:hover .g-card-hover-overlay { opacity: 1; }
+    .g-card-hover-label {
+      background: var(--accent);
+      color: var(--black);
+      padding: 8px 20px;
+      border-radius: 4px;
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+    .g-card-info {
+      flex: 0 0 10%;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+      min-height: 0;
+    }
+    .g-card-title {
+      font-family: var(--font-head);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    .g-card-dl {
+      font-size: 0.68rem;
+      color: var(--grey2);
+      margin-right: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <img src="assets/oryx-logo.png" class="loading-logo" alt="Oryx"/>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+<div id="toast-container"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="index.html" class="nav-logo">
+      <img src="assets/oryx-logo.png" alt="Oryx Flow"/>
+      <span>ORYX <em>FLOW</em></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active" data-i18n="nav_home">الرئيسية</a></li>
+      <li><a href="profile.html" class="nav-logged-in hidden" data-i18n="nav_profile">حسابي</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="lang-btn" id="lang-toggle-btn" onclick="i18n.toggle()">EN</button>
+      <div class="nav-coins nav-logged-in hidden">
+        <img src="assets/oryx-coins.webp" alt="coins"/>
+        <span class="js-coins">0</span>
+      </div>
+      <a href="login.html" class="btn btn-outline btn-sm nav-logged-out" data-i18n="nav_login">دخول</a>
+      <button onclick="logout()" class="btn btn-ghost btn-sm nav-logged-in hidden" data-i18n="nav_logout">خروج</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content container">
+    <div class="tag fade-in" data-i18n="hero.tag">⚡ نسخة تجريبية</div>
+    <h1 class="fade-in">
+      <span data-i18n="hero.title1">مستقبل الألعاب</span>
+      <br/>
+      <span class="accent" data-i18n="hero.title2">الاجتماعية</span>
+    </h1>
+    <p class="hero-desc fade-in" data-i18n="hero.desc">
+      منصة موحدة تجمع اللاعبين ومطوري الألعاب.
+    </p>
+    <div class="hero-btns fade-in">
+      <a href="login.html" class="btn btn-primary btn-lg nav-logged-out" data-i18n="hero.cta1">انضم الحين ←</a>
+      <a href="profile.html" class="btn btn-primary btn-lg nav-logged-in hidden" data-i18n="hero.cta2">ملفي الشخصي ←</a>
+      <a href="#games-section" class="btn btn-ghost btn-lg" data-i18n="hero.cta3">اكتشف الألعاب</a>
+    </div>
+    <div class="hero-stats fade-in">
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="stat-games">0</div>
+        <div class="hero-stat-label" data-i18n="hero.stat.games">لعبة</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">4</div>
+        <div class="hero-stat-label" data-i18n="hero.stat.trophies">مستويات كأس</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">1000</div>
+        <div class="hero-stat-label" data-i18n="hero.stat.coins">أقصى كوينز</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GAMES SECTION -->
+<section class="section" id="games-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="tag" data-i18n="games.tag">مكتبة الألعاب</div>
+      <h2 data-i18n="games.title">الألعاب</h2>
+      <p data-i18n="games.desc">ألعاب من صنع المجتمع</p>
+    </div>
+
+    <!-- Loading state -->
+    <div id="games-loading" style="text-align:center;padding:60px 0;color:var(--grey)">
+      <div style="font-size:2rem;margin-bottom:12px">⏳</div>
+      <p>جاري تحميل الألعاب...</p>
+    </div>
+
+    <!-- Empty state -->
+    <div id="games-empty" style="display:none;text-align:center;padding:80px 20px">
+      <div style="font-size:3.5rem;margin-bottom:16px;filter:grayscale(0.3)">🎮</div>
+      <h3 style="font-size:1.3rem;margin-bottom:8px">ما في ألعاب بعد</h3>
+      <p style="color:var(--grey);margin-bottom:24px">كن أول من يرفع لعبة على المنصة!</p>
+      <a href="profile.html" class="btn btn-primary nav-logged-in hidden">ارفع لعبتك ←</a>
+      <a href="login.html"   class="btn btn-outline nav-logged-out">سجل وارفع ←</a>
+    </div>
+
+    <!-- Games Grid -->
+    <div class="games-grid" id="games-grid" style="display:none"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <img src="assets/oryx-logo.png" style="height:32px;opacity:0.4;margin-bottom:12px" alt="Oryx"/>
+    <p style="color:var(--grey2);font-size:0.82rem">© 2026 Oryx Flow</p>
+    <p id="footer-beta" style="color:var(--grey2);font-size:0.78rem;margin-top:6px;opacity:0.7">
+      هذه نسخة تجريبية (Beta) — بعض الميزات قد لا تعمل بشكل كامل
+    </p>
+  </div>
+</footer>
+<script>
+function _updateFooterBeta() {
+  const el = document.getElementById('footer-beta'); if (!el) return;
+  el.textContent = window.i18n?.current === 'ar'
+    ? 'هذه نسخة تجريبية (Beta) — بعض الميزات قد لا تعمل بشكل كامل'
+    : 'This is a Beta version — some features may not work fully';
+}
+window.addEventListener('langChanged', _updateFooterBeta);
+document.addEventListener('DOMContentLoaded', () => setTimeout(_updateFooterBeta, 300));
+</script>
+
+<script type="module">
+  import './app.js';
+
+  async function loadGames() {
+    const loading = document.getElementById('games-loading');
+    const empty   = document.getElementById('games-empty');
+    const grid    = document.getElementById('games-grid');
+    const statEl  = document.getElementById('stat-games');
+
+    try {
+      const games = await window.loadAllGames();
+      loading.style.display = 'none';
+
+      if (statEl) statEl.textContent = games.length || '0';
+
+      if (!games.length) {
+        empty.style.display = 'block';
+        return;
+      }
+
+      grid.style.display = 'grid';
+      grid.innerHTML = '';
+
+      games.forEach((g, i) => {
+        const card = document.createElement('div');
+        card.className = 'g-card fade-in';
+        card.style.animationDelay = `${i * 0.05}s`;
+
+        const isAr = window.i18n?.current === 'ar';
+        card.innerHTML = `
+          <div class="g-card-img">
+            ${g.thumbnailURL
+              ? `<img src="${g.thumbnailURL}" alt="${g.title}" loading="lazy"/>`
+              : `<div class="g-card-img-ph">${(g.title||'').substring(0,4).toUpperCase()}</div>`
+            }
+            <div class="g-card-hover-overlay">
+              <span class="g-card-hover-label">${isAr ? 'عرض اللعبة' : 'VIEW'}</span>
+            </div>
+          </div>
+          <div class="g-card-info">
+            <span class="g-card-title">${g.title}</span>
+            <span class="g-card-dl">📥 ${g.downloads || 0}</span>
+          </div>`;
+
+        card.onclick = () => window.location.href = `game.html?id=${g.id}`;
+        grid.appendChild(card);
+      });
+
+      // Intersection Observer for neon glow on scroll
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) e.target.classList.add('neon-glow');
+          else e.target.classList.remove('neon-glow');
+        });
+      }, { threshold: 0.1 });
+      grid.querySelectorAll('.g-card').forEach(c => obs.observe(c));
+
+    } catch (err) {
+      loading.style.display = 'none';
+      empty.style.display   = 'block';
+      const h = empty.querySelector('h3');
+      if (h) h.textContent = 'تعذّر تحميل الألعاب';
+    }
+  }
+
+  // Load after Firebase auth resolves
+  const _p = setInterval(() => {
+    if (window.OryxApp?.currentUser !== undefined) {
+      clearInterval(_p);
+      loadGames();
+    }
+  }, 150);
+
+  window.addEventListener('langChanged', loadGames);
+</script>
+
+<script>
+function toggleNav() {
+  const l = document.querySelector('.nav-links');
+  const h = document.getElementById('nav-hamburger');
+  if (!l) return;
+  const o = l.classList.toggle('nav-open');
+  if (h) h.classList.toggle('open', o);
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.navbar')) {
+    document.querySelector('.nav-links')?.classList.remove('nav-open');
+    document.getElementById('nav-hamburger')?.classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>
