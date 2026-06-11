@@ -281,7 +281,13 @@
     });
   }
 
-  setTimeout(loadMobileGames, 1000);
+  // Load immediately after auth ready
+  if (window.OryxApp?.currentUser !== undefined) {
+    loadMobileGames();
+  } else {
+    window.addEventListener('oryxUserReady', () => loadMobileGames(), { once: true });
+    setTimeout(loadMobileGames, 3000); // fallback
+  }
   window.addEventListener('langChanged', () => setTimeout(loadMobileGames, 50));
 </script>
 
