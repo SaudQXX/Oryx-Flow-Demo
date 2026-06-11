@@ -281,14 +281,13 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(_updateFooterBeta
     }
   }
 
-  // Load after Firebase auth resolves
-  const _p = setInterval(() => {
-    if (window.OryxApp?.currentUser !== undefined) {
-      clearInterval(_p);
-      loadGames();
-    }
-  }, 150);
-
+  // Load immediately (boot is sync) or on ready event
+  if (window.OryxApp?.currentUser !== undefined) {
+    loadGames();
+  } else {
+    window.addEventListener('oryxUserReady', () => loadGames(), { once: true });
+    setTimeout(() => { if (document.getElementById('games-loading')?.style.display !== 'none') loadGames(); }, 3000);
+  }
   window.addEventListener('langChanged', loadGames);
 </script>
 
