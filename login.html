@@ -116,18 +116,10 @@
 </div>
 
 <script>
-// ── التحقق: إذا المستخدم موجود اصلاً، انقله للبروفايل ──
+// ── إذا المستخدم مسجل بالفعل، انقله للبروفايل مباشرة ──
 (function() {
   const oxid = localStorage.getItem('oryx_oxid');
-  if (oxid) {
-    // تحقق سريع من الـ API
-    fetch('https://oryx-horizon.vercel.app/api/verify?oxid=' + encodeURIComponent(oxid))
-      .then(r => r.json())
-      .then(data => {
-        if (data.valid) window.location.href = 'profile.html';
-      })
-      .catch(() => {});
-  }
+  if (oxid) window.location.href = 'profile.html';
 })();
 
 // ── إخفاء loading overlay ──
