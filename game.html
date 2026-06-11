@@ -194,13 +194,13 @@
   let _game = null;
   if (!gameId) window.location.href = 'index.html';
 
-  // Wait for Firebase
-  const _p = setInterval(async () => {
-    if (window.OryxApp && window.OryxApp.currentUser !== undefined) {
-      clearInterval(_p);
-      await _initPage();
-    }
-  }, 200);
+  // Boot is sync — currentUser is set immediately from localStorage
+  if (window.OryxApp?.currentUser !== undefined) {
+    _initPage();
+  } else {
+    window.addEventListener('oryxUserReady', () => _initPage(), { once: true });
+    setTimeout(() => _initPage(), 3000); // fallback
+  }
 
   async function _initPage() {
     try { _game = await window.loadGame(gameId); } catch (_) {}
