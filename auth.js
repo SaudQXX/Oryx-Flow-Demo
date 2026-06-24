@@ -6,7 +6,7 @@
 
 const OXID_KEY        = 'oryx_oxid';
 const USER_KEY        = 'oryx_user';
-const HORIZON_API     = 'https://oryx-horizon.vercel.app/api/verify';
+const HORIZON_API     = 'https://oxidx.vercel.app/api/verify';
 const LOGIN_PAGE      = 'login.html';
 const PROFILE_PAGE    = 'profile.html';
 
