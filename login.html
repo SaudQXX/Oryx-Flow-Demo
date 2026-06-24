@@ -162,7 +162,7 @@ async function handleOxidLogin() {
   btn.textContent  = '⏳ جاري التحقق...';
 
   try {
-    const res  = await fetch('https://oryx-horizon.vercel.app/api/verify?oxid=' + encodeURIComponent(oxid));
+    const res  = await fetch('https://oxidx.vercel.app/api/verify?oxid=' + encodeURIComponent(oxid));
     const data = await res.json();
 
     if (data.valid && data.user) {
