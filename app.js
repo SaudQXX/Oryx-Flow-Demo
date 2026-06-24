@@ -24,8 +24,8 @@ const db    = getFirestore(fbApp);
 
 // ─── CONSTANTS ───────────────────────────────────────────
 const WORKER_URL   = 'https://oryx-folw.saud-qattan.workers.dev';
-const HORIZON_API  = 'https://oryx-horizon.vercel.app/api/verify';
-const ADMIN_OXIDS  = ['OX-JJC6WC'];
+const HORIZON_API  = 'https://oxidx.vercel.app/api/verify';
+const ADMIN_OXIDS  = ['OX-TSI7LM'];
 const ADMIN_EMAILS = ['saudqattan00@gmail.com'];
 
 // ─── ADMIN CHECK ─────────────────────────────────────────
